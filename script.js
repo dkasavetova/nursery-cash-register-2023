@@ -29,12 +29,10 @@ class NurseryCashRegister {
     }
 
     setupEventListeners() {
-        const refreshBtn = document.getElementById('refresh-btn');
         const incomeBtn = document.getElementById('income-btn');
         const expenseBtn = document.getElementById('expense-btn');
         const monthFilter = document.getElementById('month-filter');
 
-        refreshBtn.addEventListener('click', () => this.loadTransactions());
         incomeBtn.addEventListener('click', () => this.showIncomeOnly());
         expenseBtn.addEventListener('click', () => this.showExpensesOnly());
         monthFilter.addEventListener('change', () => this.filterTransactions());
@@ -378,6 +376,11 @@ class NurseryCashRegister {
 
         if (!selectedMonth) {
             this.displayTransactions();
+            // Показваме статус че са всички транзакции
+            const statusDiv = document.getElementById('connection-status');
+            if (statusDiv) {
+                statusDiv.innerHTML = '<span style="color: blue;">📊 Показани са всички транзакции</span>';
+            }
             return;
         }
 
@@ -385,16 +388,21 @@ class NurseryCashRegister {
             return new Date(transaction.date).getMonth() + 1 === parseInt(selectedMonth);
         });
 
-        // Временно запазваме оригиналните транзакции
+        // Показваме само филтрираните транзакции, без да променяме summary
         const originalTransactions = [...this.transactions];
         this.transactions = filteredTransactions;
-        
-        this.calculateSummary();
         this.displayTransactions();
-        this.updateSummaryDisplay();
-        
-        // Връщаме оригиналните транзакции
         this.transactions = originalTransactions;
+        
+        // Показваме статус за филтрирания месец
+        const months = [
+            'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
+            'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
+        ];
+        const statusDiv = document.getElementById('connection-status');
+        if (statusDiv) {
+            statusDiv.innerHTML = `<span style="color: purple;">📅 Показани транзакции за ${months[selectedMonth - 1]}</span>`;
+        }
     }
 
     formatDate(date) {
