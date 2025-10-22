@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каса на набор 2023, 53ДГ Дядовата ръкавичка</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Каса на набор 2023, 53ДГ Дядовата ръкавичка</h1>
+        <p>Финансов отчет</p>
+    </header>
+
+    <main>
+        <section class="summary">
+            <h2>Общо състояние</h2>
+            <div class="summary-cards">
+                <div class="card">
+                    <h3>Общо приходи</h3>
+                    <span id="total-income" class="amount">0.00 лв</span>
+                </div>
+                <div class="card">
+                    <h3>Общо разходи</h3>
+                    <span id="total-expenses" class="amount">0.00 лв</span>
+                </div>
+                <div class="card">
+                    <h3>Налично салдо</h3>
+                    <span id="balance" class="amount">0.00 лв</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="transactions">
+            <h2>Транзакции</h2>
+            <div class="controls">
+                <button id="refresh-btn">Обнови данните</button>
+                <button id="income-btn">Приходи</button>
+                <button id="expense-btn">Разходи</button>
+                <select id="month-filter">
+                    <option value="">Всички месеци</option>
+                </select>
+            </div>
+            <div id="connection-status" class="connection-status"></div>
+            <div class="loading" id="loading">Зареждане...</div>
+            <table id="transactions-table" class="hidden">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Описание</th>
+                        <th>Тип</th>
+                        <th>Сума</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-body">
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Яслена група - Финансов отчет</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
