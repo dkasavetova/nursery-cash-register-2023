@@ -18,6 +18,10 @@ class NurseryCashRegister {
             totalExpenses: 0,
             balance: 0
         };
+        this.currentFilter = {
+            type: 'all', // 'all', 'income', 'expense'
+            month: null
+        };
         
         this.initializeApp();
     }
@@ -31,11 +35,25 @@ class NurseryCashRegister {
     setupEventListeners() {
         const incomeBtn = document.getElementById('income-btn');
         const expenseBtn = document.getElementById('expense-btn');
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
         const monthFilter = document.getElementById('month-filter');
 
         incomeBtn.addEventListener('click', () => this.showIncomeOnly());
         expenseBtn.addEventListener('click', () => this.showExpensesOnly());
+        clearFiltersBtn.addEventListener('click', () => this.clearAllFilters());
         monthFilter.addEventListener('change', () => this.filterTransactions());
+    }
+
+    clearAllFilters() {
+        this.currentFilter = { type: 'all', month: null };
+        
+        // Възстановяваме падащото меню
+        const monthFilter = document.getElementById('month-filter');
+        if (monthFilter) {
+            monthFilter.value = '';
+        }
+        
+        this.applyFilters();
     }
 
     populateMonthFilter() {
@@ -140,11 +158,9 @@ class NurseryCashRegister {
         this.displayTransactions();
         this.updateSummaryDisplay();
         
-        // Добавяме визуална индикация за всички транзакции
-        const statusDiv = document.getElementById('connection-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = '<span style="color: blue;">📊 Показани са всички транзакции</span>';
-        }
+        // Възстановяваме филтрите при зареждане на нови данни
+        this.currentFilter = { type: 'all', month: null };
+        this.updateFilterStatus();
     }
 
     parseCSVLine(line) {
@@ -216,11 +232,9 @@ class NurseryCashRegister {
         this.displayTransactions();
         this.updateSummaryDisplay();
         
-        // Добавяме визуална индикация за всички транзакции
-        const statusDiv = document.getElementById('connection-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = '<span style="color: blue;">📊 Показани са всички транзакции</span>';
-        }
+        // Възстановяваме филтрите при зареждане на демо данни
+        this.currentFilter = { type: 'all', month: null };
+        this.updateFilterStatus();
     }
 
     parseDate(dateString) {
@@ -325,84 +339,90 @@ class NurseryCashRegister {
     }
 
     showIncomeOnly() {
-        // Филтрираме само приходите
-        const incomeTransactions = this.transactions.filter(transaction => 
-            transaction.amount > 0 || 
-            transaction.type.toLowerCase().includes('приход')
-        );
-
-        // Временно запазваме оригиналните транзакции
-        const originalTransactions = [...this.transactions];
-        
-        // Показваме филтрираните транзакции, но запазваме оригиналната статистика
-        const tempTransactions = [...this.transactions];
-        this.transactions = incomeTransactions;
-        this.displayTransactions();
-        this.transactions = tempTransactions;
-
-        // Добавяме визуална индикация
-        const statusDiv = document.getElementById('connection-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = '<span style="color: green;">📈 Показани са само приходите</span>';
-        }
+        this.currentFilter.type = 'income';
+        this.applyFilters();
     }
 
     showExpensesOnly() {
-        // Филтрираме само разходите
-        const expenseTransactions = this.transactions.filter(transaction => 
-            transaction.amount < 0 || 
-            transaction.type.toLowerCase().includes('разход')
-        );
+        this.currentFilter.type = 'expense';
+        this.applyFilters();
+    }
 
-        // Временно запазваме оригиналните транзакции
-        const originalTransactions = [...this.transactions];
-        
-        // Показваме филтрираните транзакции, но запазваме оригиналната статистика
+    applyFilters() {
+        let filteredTransactions = [...this.transactions];
+
+        // Филтрираме по месец ако е избран
+        if (this.currentFilter.month) {
+            filteredTransactions = filteredTransactions.filter(transaction => {
+                return new Date(transaction.date).getMonth() + 1 === parseInt(this.currentFilter.month);
+            });
+        }
+
+        // Филтрираме по тип
+        if (this.currentFilter.type === 'income') {
+            filteredTransactions = filteredTransactions.filter(transaction => 
+                transaction.amount > 0 || 
+                transaction.type.toLowerCase().includes('приход')
+            );
+        } else if (this.currentFilter.type === 'expense') {
+            filteredTransactions = filteredTransactions.filter(transaction => 
+                transaction.amount < 0 || 
+                transaction.type.toLowerCase().includes('разход')
+            );
+        }
+
+        // Показваме филтрираните транзакции
         const tempTransactions = [...this.transactions];
-        this.transactions = expenseTransactions;
+        this.transactions = filteredTransactions;
         this.displayTransactions();
         this.transactions = tempTransactions;
 
-        // Добавяме визуална индикация
+        // Обновяваме статусното съобщение
+        this.updateFilterStatus();
+    }
+
+    updateFilterStatus() {
         const statusDiv = document.getElementById('connection-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = '<span style="color: red;">📉 Показани са само разходите</span>';
+        if (!statusDiv) return;
+
+        const months = [
+            'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
+            'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
+        ];
+
+        let message = '';
+        let color = 'blue';
+
+        if (this.currentFilter.type === 'income' && this.currentFilter.month) {
+            message = `📈 Показани приходи за ${months[this.currentFilter.month - 1]}`;
+            color = 'green';
+        } else if (this.currentFilter.type === 'expense' && this.currentFilter.month) {
+            message = `📉 Показани разходи за ${months[this.currentFilter.month - 1]}`;
+            color = 'red';
+        } else if (this.currentFilter.type === 'income') {
+            message = '📈 Показани са само приходите';
+            color = 'green';
+        } else if (this.currentFilter.type === 'expense') {
+            message = '📉 Показани са само разходите';
+            color = 'red';
+        } else if (this.currentFilter.month) {
+            message = `📅 Показани транзакции за ${months[this.currentFilter.month - 1]}`;
+            color = 'purple';
+        } else {
+            message = '📊 Показани са всички транзакции';
+            color = 'blue';
         }
+
+        statusDiv.innerHTML = `<span style="color: ${color};">${message}</span>`;
     }
 
     filterTransactions() {
         const monthFilter = document.getElementById('month-filter');
         const selectedMonth = monthFilter.value;
 
-        if (!selectedMonth) {
-            this.displayTransactions();
-            // Показваме статус че са всички транзакции
-            const statusDiv = document.getElementById('connection-status');
-            if (statusDiv) {
-                statusDiv.innerHTML = '<span style="color: blue;">📊 Показани са всички транзакции</span>';
-            }
-            return;
-        }
-
-        const filteredTransactions = this.transactions.filter(transaction => {
-            return new Date(transaction.date).getMonth() + 1 === parseInt(selectedMonth);
-        });
-
-        // Показваме само филтрираните транзакции, без да променяме summary
-        const originalTransactions = [...this.transactions];
-        this.transactions = filteredTransactions;
-        this.displayTransactions();
-        this.transactions = originalTransactions;
-        
-        // Показваме статус за филтрирания месец
-        const months = [
-            'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
-            'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
-        ];
-        const statusDiv = document.getElementById('connection-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = `<span style="color: purple;">📅 Показани транзакции за ${months[selectedMonth - 1]}</span>`;
-        }
+        // Ако е избрано "Всички месеци" (празна стойност), месецът става null
+        this.currentFilter.month = selectedMonth || null;
+        this.applyFilters();
     }
 
     formatDate(date) {
